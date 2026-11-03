@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const fetch = require('node-fetch');
+const { execFile } = require('child_process');
 
 const logger = require('./logger');
 const utils = require('./utils');
@@ -25,7 +26,26 @@ const download_sources = {
     }
 }
 
+// yt-dlp's Linux/macOS release is a Python zipapp, so it runs with the system python3
+const MIN_PYTHON_VERSION = [3, 11];
+
+const checkPythonVersion = () => {
+    if (is_windows) return; // the Windows release is a standalone .exe
+    execFile('python3', ['-c', 'import sys; print("%d.%d.%d" % sys.version_info[:3])'], (err, stdout) => {
+        if (err) {
+            logger.error(`Could not find python3, which yt-dlp requires (version ${MIN_PYTHON_VERSION.join('.')} or newer).`);
+            return;
+        }
+        const version = stdout.trim().split('.').map(Number);
+        const [min_major, min_minor] = MIN_PYTHON_VERSION;
+        if (version[0] < min_major || (version[0] === min_major && version[1] < min_minor)) {
+            logger.error(`yt-dlp requires Python ${MIN_PYTHON_VERSION.join('.')} or newer, but python3 is version ${stdout.trim()}. Downloads will fail until Python is upgraded.`);
+        }
+    });
+}
+
 exports.checkForYoutubeDLUpdate = async () => {
+    if (config_api.getConfigItem('ytdl_default_downloader') === 'yt-dlp') checkPythonVersion();
     return new Promise(async resolve => {
         const default_downloader = config_api.getConfigItem('ytdl_default_downloader');
         const tags_url = download_sources[default_downloader]['tags_url'];
