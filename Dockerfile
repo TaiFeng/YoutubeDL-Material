@@ -6,6 +6,7 @@ COPY docker-utils/*.sh .
 RUN chmod +x *.sh
 RUN sh ./ffmpeg-fetch.sh
 RUN sh ./fetch-twitchdownloader.sh
+RUN sh ./fetch-deno.sh
 
 
 # Create our Ubuntu 24.04 with node 16.14.2 (that specific version is required as per: https://stackoverflow.com/a/72855258/8088021)
@@ -93,6 +94,10 @@ WORKDIR /app
 COPY --chown=$UID:$GID --from=utils [ "/usr/local/bin/ffmpeg", "/usr/local/bin/ffmpeg" ]
 COPY --chown=$UID:$GID --from=utils [ "/usr/local/bin/ffprobe", "/usr/local/bin/ffprobe" ]
 COPY --chown=$UID:$GID --from=utils [ "/usr/local/bin/TwitchDownloaderCLI", "/usr/local/bin/TwitchDownloaderCLI"]
+# JavaScript runtime yt-dlp uses for YouTube extraction
+COPY --chown=$UID:$GID --from=utils [ "/usr/local/bin/deno", "/usr/local/bin/deno" ]
+ENV DENO_DIR=/app/.deno
+ENV DENO_NO_UPDATE_CHECK=1
 COPY --chown=$UID:$GID --from=backend ["/app/","/app/"]
 COPY --chown=$UID:$GID --from=frontend [ "/build/backend/public/", "/app/public/" ]
 #COPY --chown=$UID:$GID --from=python ["/app/TwitchDownloaderCLI","/usr/local/bin/TwitchDownloaderCLI"]
