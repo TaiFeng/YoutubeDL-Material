@@ -44,7 +44,14 @@ const checkPythonVersion = () => {
     });
 }
 
+// fetchFile creates new files without the execute bit, which makes spawning the binary fail with EACCES
+const ensureExecutable = (binary_path) => {
+    if (is_windows || !fs.existsSync(binary_path)) return;
+    fs.chmodSync(binary_path, 0o755);
+}
+
 exports.checkForYoutubeDLUpdate = async () => {
+    ensureExecutable(`node_modules/youtube-dl/bin/youtube-dl`);
     if (config_api.getConfigItem('ytdl_default_downloader') === 'yt-dlp') checkPythonVersion();
     return new Promise(async resolve => {
         const default_downloader = config_api.getConfigItem('ytdl_default_downloader');
@@ -127,6 +134,7 @@ async function downloadLatestYoutubeDLBinary(new_version) {
     const output_path = `node_modules/youtube-dl/bin/youtube-dl${file_ext}`;
 
     await utils.fetchFile(download_url, output_path, `youtube-dl ${new_version}`);
+    ensureExecutable(output_path);
 
     updateDetailsJSON(new_version, 'youtube-dl');
 }
@@ -138,6 +146,7 @@ async function downloadLatestYoutubeDLCBinary(new_version) {
     const output_path = `node_modules/youtube-dl/bin/youtube-dl${file_ext}`;
 
     await utils.fetchFile(download_url, output_path, `youtube-dlc ${new_version}`);
+    ensureExecutable(output_path);
 
     updateDetailsJSON(new_version, 'youtube-dlc');
 }
@@ -149,6 +158,7 @@ async function downloadLatestYoutubeDLPBinary(new_version) {
     const output_path = `node_modules/youtube-dl/bin/youtube-dl${file_ext}`;
 
     await utils.fetchFile(download_url, output_path, `yt-dlp ${new_version}`);
+    ensureExecutable(output_path);
 
     updateDetailsJSON(new_version, 'yt-dlp');
 }

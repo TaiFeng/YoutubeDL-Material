@@ -385,7 +385,8 @@ exports.fetchFile = async (url, path, file_label) => {
         res.body.on('data', function (chunk) {
             bar.tick(chunk.length);
         });
-        fileStream.on("finish", function() {
+        // wait for 'close' rather than 'finish' so the file descriptor is released before the file is executed (avoids ETXTBSY)
+        fileStream.on("close", function() {
           resolve();
         });
     });
