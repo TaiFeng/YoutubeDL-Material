@@ -55,10 +55,7 @@ jobs:
             type=raw,value=${{ steps.tags.outputs.tags }}
             type=raw,value=latest
 
-      - name: setup platform emulator
-        uses: docker/setup-qemu-action@v3
-
-      - name: setup multi-arch docker build
+      - name: setup docker build
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
@@ -73,7 +70,8 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          # x86 only; add linux/arm64 back (with docker/setup-qemu-action) for ARM hosts
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
