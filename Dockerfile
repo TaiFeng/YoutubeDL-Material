@@ -58,8 +58,12 @@ RUN rm -rf node_modules
 FROM base as backend
 WORKDIR /app
 COPY [ "backend/","/app/" ]
+# --ignore-scripts skips the deprecated youtube-dl package's postinstall, which scrapes yt-dl.org and now crashes.
+# It's the only dependency with an install script, and the app downloads its own downloader binary at startup.
 RUN npm config set strict-ssl false && \
-    npm install --prod && \
+    npm install --prod --ignore-scripts && \
+    mkdir -p node_modules/youtube-dl/bin && \
+    echo '{"version":"2000.06.06","path":"node_modules/youtube-dl/bin/youtube-dl","exec":"youtube-dl","downloader":"youtube-dl"}' > node_modules/youtube-dl/bin/details && \
     ls -al
 
 #FROM base as python
